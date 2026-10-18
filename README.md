@@ -1,123 +1,55 @@
-# Python TCP Client–Server
+Python TCP Reverse-Shell Experiment
+A small Python networking project created to study TCP sockets, client/server communication, and how data can be exchanged between two processes over a network.
+[!CAUTION]
+This code executes commands received over a network. The client uses subprocess.Popen(..., shell=True), so input received from the server can run as operating-system commands on the client machine. The implementation has no authentication or encryption. Treat it as an educational code sample only: do not run it on devices you do not own or administer, do not use it without explicit authorization, and never expose it to the public internet or an untrusted network.
 
-A Python networking project exploring TCP socket communication, multithreading, client connections, and interactive connection management.
+Project Structure
+TCP/
+├── README.md
+└── Reverseshell/
+    ├── server.py
+    └── client.py
+Concepts Explored
+- Creating TCP sockets with Python's built-in socket module.
+- Binding a server socket to a port and listening for a connection.
+- Accepting a client connection and exchanging byte streams.
+- Working with IP addresses and TCP ports.
+- Reading and writing data over a socket.
+- Capturing process output using Python's subprocess module.
+- Inspecting and changing the client's working directory.
+Technologies
+Module	Purpose in this experiment
+socket	TCP socket creation and communication
+subprocess	Process execution in the current client implementation
+os	Working-directory operations
+sys	Process exit handling in the server
 
-This project was created as a hands-on learning exercise to understand how a server listens for incoming connections, how clients connect over a network, and how Python can manage multiple client connections.
 
-> **Security notice:** The current implementation includes remote command execution through `subprocess.Popen(..., shell=True)`. Running it can allow commands received over the network to execute on the client machine. Use only in an isolated lab with systems you own or have explicit permission to test. Do not expose it to public networks or use it on untrusted devices.
-
-## Features
-
-- **TCP socket communication** — Uses Python's built-in `socket` module.
-- **Connection listener** — Binds to a port and listens for incoming client connections.
-- **Multiple client connections** — Maintains lists of active connections and their addresses.
-- **Threading** — Uses worker threads to separate connection handling from the interactive interface.
-- **Interactive terminal interface** — Includes commands for listing connections and selecting a client.
-- **Working-directory handling** — The client attempts to support directory changes through received commands.
-- **Standard output and error handling** — Captures command output and sends it back over the socket.
-
-## Tech Stack
-
-| Technology | Purpose |
-|---|---|
-| Python 3 | Core programming language |
-| `socket` | TCP networking |
-| `threading` | Concurrent execution |
-| `queue` | Worker job management |
-| `subprocess` | Process execution in the current implementation |
-| `os` | Operating-system and directory operations |
-
-No third-party Python packages are required by the code shown.
-
-## Project Structure
-
-```text
-python-tcp-client-server/
-├── server.py
-├── client.py
-└── README.md
-```
-
-## Requirements
-
-- Python 3
-- Two terminal sessions for local testing
-- A private, isolated test environment
-- Permission to test every device involved
-
-Check your Python installation:
-
-```bash
-python3 --version
-```
-
-## Configuration
-
-The server listens on TCP port `9999`.
-
-In `server.py`, the host is configured as an empty string, which means the server binds to the available local IPv4 interfaces.
-
-In `client.py`, replace the placeholder server address with the IP address of your authorized test server:
-
-```python
-host = "SERVER_IP_ADDRESS"
-port = 9999
-```
-
-Keep testing within a controlled lab environment. The current implementation does not provide authentication, encrypted communication, or a secure authorization protocol.
-
-## Running the Project
-
-1. Start the server in the first terminal:
-
-   ```bash
-   python3 server.py
-   ```
-
-2. Start the client in a second terminal on an authorized test machine:
-
-   ```bash
-   python3 client.py
-   ```
-
-3. Observe the connection messages and server-side client list.
-
-**Important:** The implementation has known limitations, including recursive socket-binding retries, incomplete exception handling, shared-list concurrency issues, and potentially blocking socket reads. It should not be considered production-ready.
-
-## Learning Objectives
-
-This project helped me explore:
-
-- TCP connection establishment and socket lifecycle.
-- The difference between a server and a client.
-- IP addresses, ports, and network interfaces.
-- Basic concurrency using Python threads.
-- Managing connected clients and their network addresses.
-- Debugging socket errors such as `ConnectionRefusedError` and `Address already in use`.
-- Understanding the security implications of executing data received over a network.
-
-## Limitations
-
-- No authentication or encrypted transport.
-- No robust message-framing protocol.
-- No reliable reconnect mechanism.
-- Incomplete handling of client disconnections.
-- Potential deadlocks and recursion errors.
-- Remote command execution makes the current design unsafe for untrusted networks.
-
-## Future Improvements
-
-- Replace arbitrary remote command execution with a safe message-based protocol.
-- Introduce message framing and connection timeouts.
-- Use thread-safe connection management.
-- Add structured logging and graceful shutdown.
-- Add unit tests for connection failures and dropped connections.
-- Implement authentication and encrypted communication for any future authorized remote-management features.
-
-## Disclaimer
-
-This repository is intended for educational study of Python networking and concurrency. Any testing must be limited to systems you own or are explicitly authorized to test. The current implementation is experimental and is not intended for production deployment.
-
-## License
-
-Choose an appropriate open-source license before publishing this repository. For example, the MIT License is a common option for projects intended to be reused and modified.
+The code uses Python's standard library; no third-party packages are listed as dependencies.
+Current Implementation
+- server.py binds to port 9999, listens for a connection, and handles one client at a time.
+- client.py connects to a server address hard-coded in the source (192.168.1.5) on port 9999.
+- The client executes received text as a shell command and sends captured output back over the connection.
+The address is specific to the author's local network and will not work on every machine. The files are an experimental implementation, not a secure remote-management tool.
+Known Issues and Limitations
+- No authentication or encryption: network traffic and commands are not protected.
+- Arbitrary command execution: the client runs received input through a shell, creating a serious security risk.
+- Single-client design: the server handles one accepted connection at a time.
+- Recursive bind retry: a failed bind calls bind_socket() again recursively; if the port remains occupied, the process can eventually raise RecursionError.
+- Incomplete error handling: connection failures and disconnects are not handled consistently.
+- No message framing: TCP is a byte stream, so one recv() call is not guaranteed to return one complete application message.
+- Potential blocking: socket reads and subprocess output reads can block.
+- Working-directory handling needs correction: the client attempts to change directories but continues through the command-processing path afterward.
+- Hard-coded network configuration: the client IP address is embedded in the source.
+Safe Development Direction
+For a safer networking portfolio project, replace remote shell execution with a message-only protocol. Useful next steps include:
+- Exchange text messages without executing them as operating-system commands.
+- Add explicit message framing and socket timeouts.
+- Handle disconnects and shutdown cleanly.
+- Replace recursive retries with bounded error handling.
+- Add tests for connection success, refused connections, and unexpected disconnects.
+- If the project later handles sensitive data, design authentication and encrypted transport before implementing those features.
+Disclaimer
+This repository is for educational study of Python networking concepts. Use only in an isolated lab with systems you own or are explicitly authorized to test. It is not production-ready and should not be treated as a secure remote-access solution.
+License
+No license is specified in this repository. Add a license file if you intend to grant others permission to use, modify, or redistribute the code.
